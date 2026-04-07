@@ -8,33 +8,6 @@ import cv2
 from core.Aubo_Robot import Aubo_Robot
 from tools.UDPReceiver import UDPTrackingReceiver
 from core.Camera import RSD435i
-import random
-
-def random_patrol(robot, N):
-    """
-    按随机顺序遍历五个点位，每轮顺序不同，共执行 N 轮
-    """
-
-    # 所有目标点放入列表
-    joint_list = [
-        robot.cam1_joint_config,
-        robot.cam2_joint_config,
-        robot.cam3_joint_config,
-        robot.cam4_joint_config,
-        robot.cam5_joint_config
-    ]
-
-    for i in range(N):
-        print(f"===== 第 {i+1} 轮开始 =====")
-
-        # 每一轮打乱顺序
-        random.shuffle(joint_list)
-
-        for joint in joint_list:
-            robot.move_line(joint)
-
-        print(f"===== 第 {i+1} 轮结束 =====\n")
-
 
 def click2target(robot,camera):
 
@@ -125,9 +98,8 @@ def follow_target():
 
 if __name__ == "__main__":
     Aubo_Robot.initialize()
-    camera = RSD435i(width=1280,height=720,fps=30)  # 深度相机
-    robot = Aubo_Robot(is_use_camera=False,is_use_jaw=False)
-    # camera = Camera(width=640,height=480,fps=30,default_depth=0.3)  # 深度相机
+    # camera = RSD435i(width=1280,height=720,fps=30)  # 深度相机
+    robot = Aubo_Robot(robot_host_ip="192.168.1.40")
     robot.set_end_max_line_velc(0.02)
     robot.set_end_max_line_acc(0.02)
     # # 设置关节最大加速度
@@ -135,12 +107,7 @@ if __name__ == "__main__":
     # # 设置关节最大加速度
     # robot.set_joint_maxvelc((1, 1, 1, 1, 1, 1))
     robot.get_info()
-    # random_patrol(robot, N=5)
-    # while True:
-    #     robot.move_around()
-    # robot.go_test()
     robot.go_home()
-
     # click2target(robot,camera)
     # follow_target()
 

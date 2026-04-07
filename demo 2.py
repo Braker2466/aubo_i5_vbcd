@@ -6,17 +6,18 @@ import time
 import cv2
 # from realsenseD415 import Camera
 from core.Aubo_Robot import Aubo_Robot
-
+from core.Camera import RSD435i
 
 # Move robot to home pose
 Aubo_Robot.initialize()
-robot = Aubo_Robot(is_use_camera=True,is_use_jaw=False)
+robot = Aubo_Robot(robot_host_ip="192.168.1.40")
+camera = RSD435i(width=1280,height=720,fps=30)  # 深度相机
 robot.go_home()
 
 
 # Callback function for clicking on OpenCV window
 click_point_pix = ()
-camera_color_img, camera_depth_img = robot.get_camera_data()
+camera_color_img, camera_depth_img = camera.get_data()
 
 
 def mouseclick_callback(event, x, y, flags, param):
@@ -28,8 +29,8 @@ def mouseclick_callback(event, x, y, flags, param):
         print(f"pix: {x}, {y}")
         # Get click point in camera coordinates
         click_z = camera_depth_img[y][x] * robot.cam_depth_scale
-        click_x = np.multiply(x - robot.cam_intrinsics[0][2], click_z / robot.cam_intrinsics[0][0])
-        click_y = np.multiply(y - robot.cam_intrinsics[1][2], click_z / robot.cam_intrinsics[1][1])
+        click_x = np.multiply(x - camera.cam_intrinsics[0][2], click_z / camera.cam_intrinsics[0][0])
+        click_y = np.multiply(y - camera.cam_intrinsics[1][2], click_z / camera.cam_intrinsics[1][1])
         if click_z == 0:
             return
         click_point = np.asarray([click_x, click_y, click_z])
@@ -81,11 +82,11 @@ if __name__ == "__main__":
     cv2.namedWindow('depth')
 
     while True:
-        camera_color_img, camera_depth_img = robot.get_camera_data()
+        camera_color_img, camera_depth_img = camera.get_data()
         # bgr_data = cv2.cvtColor(camera_color_img, cv2.COLOR_RGB2BGR)
         # if len(click_point_pix) != 0:
         #     camera_color_img = cv2.circle(camera_color_img, click_point_pix, 7, (0, 0, 255), 2)
-        cx, cy = int(robot.cam_intrinsics[0][2]), int(robot.cam_intrinsics[1][2])
+        cx, cy = int(camera.intrinsics[0][2]), int(camera.intrinsics[1][2])
         cv2.circle(camera_color_img, (cx, cy), 5, (0,255,0), -1)  # 绿色 = 相机光学中心
         cv2.imshow('color', camera_color_img)
         cv2.imshow('depth', camera_depth_img)

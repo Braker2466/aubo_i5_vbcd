@@ -160,13 +160,6 @@ class Aubo_Robot(Auboi5Robot):
     def move_around(self):
         self.move_line(self.start_joint_config)
         self.move_line(self.middle_joint_config)
-    
-    def go_collect(self): #制作数据集用的
-        self.move_line(self.cam3_joint_config)
-        self.move_line(self.cam2_joint_config)
-        self.move_line(self.cam1_joint_config)
-        self.move_line(self.cam4_joint_config)
-        self.move_line(self.cam5_joint_config)
 
     def close_gripper(self):
         self.jaw.jaw_control(1)
@@ -337,68 +330,6 @@ class Aubo_Robot(Auboi5Robot):
         self.move_to_target_in_cartesian(target_position, rpy)
         return True
 
-    def align_to_target_line_1(self, position, z_offset=0.0):
-        """
-        视觉对准目标
-        - 直线运动（move_line）
-        - 姿态保持不变
-        - 显式 IK，失败可控
-        """
-
-        # ===== 1. 构造目标位置（只改位置，不动姿态）=====
-        target_pos = position.copy()
-        print("target_pos before z offset:", target_pos)
-        target_pos[2] += z_offset
-
-        # ===== 2. 工作空间检查 =====
-        for i in range(3):
-            low, high = self.workspace_limits[i]
-            if not (low <= target_pos[i] <= high):
-                print(f"[Reject] Target: {target_pos[i]:.3f} out of workspace on axis {i}:[{low:.3f}, {high:.3f}]")
-                return False
-
-        # ===== 3. 获取当前 TCP 状态 =====
-        current_wp = self.get_current_waypoint()
-        current_joint = current_wp['joint']
-        current_ori   = current_wp['ori']   #保持当前姿态
-        cur_pos = current_wp['pos']
-
-        delta = target_pos - cur_pos
-
-        # 到位判断
-        if np.linalg.norm(delta[:2]) <= 0.001:
-            print(
-            "Aligned: "
-            f"pos=({target_pos[0]:.3f}, {target_pos[1]:.3f}, {target_pos[2]:.3f})"
-        )
-            return True
-
-        # step = compute_step_stable_improve(delta)
-        # print("step:",step)
-        # next_pos = cur_pos + step
-        next_pos = target_pos
-
-        print(
-            "Aligning (line by step): "
-            f"pos=({next_pos[0]:.3f}, {next_pos[1]:.3f}, {next_pos[2]:.3f})"
-        )
-
-        # ===== 4. 显式 IK =====
-        ik_result = self.inverse_kin(
-            current_joint,
-            next_pos,
-            current_ori
-        )
-
-        if ik_result is None:
-            print("[WARN] IK failed, skip align_to_target")
-            return False
-
-        # ===== 5. 直线运动 =====
-        self.move_line(ik_result['joint'])
-
-        return True
-
     def align_to_target_line(
         self,
         position,
@@ -537,101 +468,6 @@ class Aubo_Robot(Auboi5Robot):
         target_pos = base2flange_expect[:3, 3]
 
         return target_pos
-
-
-    def align_to_target_line_stepwise(
-    self,
-    position,
-    z_offset=0.3,
-    use_fixed_z=False,
-    max_step_xy=0.005,
-    xy_deadband=0.001
-    ):
-        """
-        视觉对准目标（分步直线运动）
-        - 每次只走向目标的一小步
-        - 姿态保持不变
-        - 显式 IK，失败可控
-
-        Args:
-            position: base系目标位置 (x, y, z)
-            z_offset:
-                - use_fixed_z=False 时：在 position.z 基础上的偏移
-                - use_fixed_z=True  时：直接作为目标 z
-            use_fixed_z: 是否固定 Z
-            max_step_xy: 单次命令在 XY 平面的最大步长（m）
-            xy_deadband: XY 死区（m）
-        """
-        import numpy as np
-
-        target_pos = np.array(position, dtype=float).copy()
-
-        if use_fixed_z:
-            target_pos[2] = z_offset
-        else:
-            target_pos[2] += z_offset
-
-        # 工作空间检查
-        for i in range(3):
-            low, high = self.workspace_limits[i]
-            if not (low <= target_pos[i] <= high):
-                print(
-                    f"[Reject] Target {target_pos[i]:.3f} out of workspace on axis {i}: "
-                    f"[{low:.3f}, {high:.3f}]"
-                )
-                return False
-
-        current_wp = self.get_current_waypoint()
-        current_joint = current_wp["joint"]
-        current_ori = current_wp["ori"]
-        cur_pos = np.array(current_wp["pos"], dtype=float)
-
-        delta = target_pos - cur_pos
-        delta_xy = delta[:2]
-        dist_xy = np.linalg.norm(delta_xy)
-
-        if dist_xy <= xy_deadband:
-            print(
-                f"[Aligned-step] target=({target_pos[0]:.3f}, "
-                f"{target_pos[1]:.3f}, {target_pos[2]:.3f})"
-            )
-            return True
-
-        if dist_xy > max_step_xy:
-            step_xy = delta_xy / dist_xy * max_step_xy
-        else:
-            step_xy = delta_xy
-
-        next_pos = cur_pos.copy()
-        next_pos[0] += step_xy[0]
-        next_pos[1] += step_xy[1]
-        next_pos[2] = target_pos[2]
-
-        # 再次检查工作空间
-        for i in range(3):
-            low, high = self.workspace_limits[i]
-            if not (low <= next_pos[i] <= high):
-                print(
-                    f"[Reject-next] next_pos[{i}]={next_pos[i]:.3f} "
-                    f"out of workspace: [{low:.3f}, {high:.3f}]"
-                )
-                return False
-
-        print(
-            "[Step Align] "
-            f"cur=({cur_pos[0]:.3f},{cur_pos[1]:.3f},{cur_pos[2]:.3f}) -> "
-            f"next=({next_pos[0]:.3f},{next_pos[1]:.3f},{next_pos[2]:.3f}) "
-            f"target=({target_pos[0]:.3f},{target_pos[1]:.3f},{target_pos[2]:.3f}) "
-            f"dist_xy={dist_xy:.4f}, step_xy={np.linalg.norm(step_xy):.4f}"
-        )
-
-        ik_result = self.inverse_kin(current_joint, next_pos, current_ori)
-        if ik_result is None:
-            print("[WARN] IK failed, skip align_to_target_line_stepwise")
-            return False
-
-        self.move_line(ik_result["joint"])
-        return True
 
 
 if __name__ == "__main__":
