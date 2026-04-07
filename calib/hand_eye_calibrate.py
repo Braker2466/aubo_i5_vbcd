@@ -8,6 +8,7 @@ import os
 
 import cv2
 import numpy as np
+from calib.calibration_store import LEGACY_PATHS, update_system_calibration
 
 np.set_printoptions(precision=8, suppress=True)
 
@@ -272,8 +273,20 @@ def hand_eye_calibrate():
     return R, t
 
 
+def save_hand_eye_result(R, t):
+    camera_pose = np.eye(4)
+    camera_pose[:3, :3] = R
+    camera_pose[:3, 3] = np.asarray(t, dtype=np.float64).reshape(3)
+    np.savetxt(LEGACY_PATHS["camera_pose"], camera_pose, fmt="%.8f")
+    update_system_calibration(camera_pose=camera_pose)
+    print(f"手眼标定结果已保存到 {LEGACY_PATHS['camera_pose']}")
+    print("手眼标定结果已同步写入 calib/config/system_calibration.json")
+    return camera_pose
+
+
 if __name__ == "__main__":
     R, t = hand_eye_calibrate()
+    save_hand_eye_result(R, t)
 
     print("旋转矩阵：")
     print(R)

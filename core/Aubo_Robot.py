@@ -3,8 +3,8 @@ import time
 import copy
 import numpy as np
 import math
+from calib.calibration_store import load_camera_pose, load_depth_scale, load_tool_pose
 from core.jaw_control import JawController
-from core.Camera import RSD435i
 from core.robotcontrol import Auboi5Robot
 
 def compute_step_stable_improve(delta,
@@ -79,9 +79,9 @@ class Aubo_Robot(Auboi5Robot):
             time.sleep(1.5)
 
         # # Load camera pose (from running calibrate.py), intrinsics and depth scale
-        self.cam_pose = np.loadtxt('./camera_pose.txt', delimiter=' ')
-        self.cam_depth_scale = np.loadtxt('./camera_depth_scale.txt', delimiter=' ')
-        self.tool_pose = np.loadtxt('./tool_calibration_result.txt', delimiter=' ')
+        self.cam_pose = load_camera_pose()
+        self.cam_depth_scale = load_depth_scale()
+        self.tool_pose = load_tool_pose()
 
         # Default robot home joint configuration (the robot is up to air)
         self.home_joint_config = [-(90 / 360.0) * 2 * np.pi, -(-25 / 360.0) * 2 * np.pi,
@@ -101,26 +101,6 @@ class Aubo_Robot(Auboi5Robot):
         self.test_joint_config = [-(90 / 360.0) * 2 * np.pi, -(0 / 360.0) * 2 * np.pi,
                                   -(90 / 360.0) * 2 * np.pi, -(10 / 360.0) * 2 * np.pi,
                                   -(90 / 360.0) * 2 * np.pi, -(90 / 360.0) * 2 * np.pi]
-        
-        self.cam1_joint_config = [-(55 / 360.0) * 2 * np.pi, -(2.7 / 360.0) * 2 * np.pi,
-                                  -(82 / 360.0) * 2 * np.pi, -(-18 / 360.0) * 2 * np.pi,
-                                  -(103 / 360.0) * 2 * np.pi, -(53 / 360.0) * 2 * np.pi]
-        
-        self.cam2_joint_config = [-(91 / 360.0) * 2 * np.pi, -(26 / 360.0) * 2 * np.pi,
-                                  -(114 / 360.0) * 2 * np.pi, -(0 / 360.0) * 2 * np.pi,
-                                  -(62 / 360.0) * 2 * np.pi, -(91 / 360.0) * 2 * np.pi]
-        
-        self.cam5_joint_config = [-(66 / 360.0) * 2 * np.pi, -(14 / 360.0) * 2 * np.pi,
-                                  -(94 / 360.0) * 2 * np.pi, -(-8 / 360.0) * 2 * np.pi,
-                                  -(90 / 360.0) * 2 * np.pi, -(65 / 360.0) * 2 * np.pi]
-        
-        self.cam3_joint_config = [-(74 / 360.0) * 2 * np.pi, -(2 / 360.0) * 2 * np.pi,
-                                  -(86 / 360.0) * 2 * np.pi, -(-20 / 360.0) * 2 * np.pi,
-                                  -(78 / 360.0) * 2 * np.pi, -(75 / 360.0) * 2 * np.pi]
-        
-        self.cam4_joint_config = [-(50 / 360.0) * 2 * np.pi, -(14 / 360.0) * 2 * np.pi,
-                                  -(95 / 360.0) * 2 * np.pi, -(-0 / 360.0) * 2 * np.pi,
-                                  -(111 / 360.0) * 2 * np.pi, -(57 / 360.0) * 2 * np.pi]
 
     def get_info(self):
         end_line_acc = self.get_end_max_line_acc()
@@ -663,4 +643,3 @@ if __name__ == "__main__":
     robot.go_home()
 
     # robot.plane_grasp(position=[0,0.4,0.3])
-

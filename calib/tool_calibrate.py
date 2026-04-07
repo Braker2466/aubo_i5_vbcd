@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation as R
 
+from calib.calibration_store import LEGACY_PATHS, update_system_calibration
+
 
 class ToolCalibration:
     def __init__(self, csv_file="tool_data.csv"):
@@ -278,7 +280,9 @@ if __name__ == "__main__":
         calibrator.validate_calibration()
 
         # 保存标定结果
-        np.savetxt("tool_calibration_result.txt", tool_T, fmt='%.6f')
-        print("\n标定结果已保存到 tool_calibration_result.txt")
+        np.savetxt(LEGACY_PATHS["tool_pose"], tool_T, fmt='%.6f')
+        update_system_calibration(tool_pose=tool_T)
+        print(f"\n标定结果已保存到 {LEGACY_PATHS['tool_pose']}")
+        print("标定结果已同步写入 calib/config/system_calibration.json")
     else:
         print("数据不足，无法进行标定")

@@ -7,8 +7,8 @@ import numpy as np
 import time
 
 from core.Aubo_Robot import Aubo_Robot
-from UDPReceiver import UDPTrackingReceiver
-from TrackingSHMReceiver import TrackingSHMDoubleReceiver
+from tools.UDPReceiver import UDPTrackingReceiver
+from tools.TrackingSHMReceiver import TrackingSHMDoubleReceiver
 
 
 # =========================================================

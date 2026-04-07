@@ -6,7 +6,7 @@ import time
 import cv2
 # from realsenseD415 import Camera
 from core.Aubo_Robot import Aubo_Robot
-from UDPReceiver import UDPTrackingReceiver
+from tools.UDPReceiver import UDPTrackingReceiver
 from core.Camera import RSD435i
 import random
 
@@ -158,6 +158,5 @@ if __name__ == "__main__":
 所以在正式的run.py里用多进程的方式将接收端和机械臂运动独立开，显著减少了延迟。
  
  """
-
 
 

@@ -55,8 +55,6 @@ Codex 在本仓库中的默认职责是：
 ### 参数/标定结果文件
 - camera_depth_scale.txt
 - camera_pose.txt
-- tool_calibration_result.txt
-- tool_data.csv
 - waypoints.json
 
 规则：
@@ -136,7 +134,7 @@ Codex 在本仓库中的默认职责是：
 ## 推荐工作流
 对于复杂任务，先阅读：
 - README.md
-- docs/architecture.md
+- docs/architecture.md（如果存在）
 - docs/safety.md（如果存在）
 - docs/interfaces.md（如果存在）
 

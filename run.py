@@ -3,8 +3,8 @@ import numpy as np
 import time
 import cv2
 from core.Aubo_Robot import Aubo_Robot
-from UDPReceiver import UDPTrackingReceiver
-from TrackingSHMReceiver import TrackingSHMDoubleReceiver
+from tools.UDPReceiver import UDPTrackingReceiver
+from tools.TrackingSHMReceiver import TrackingSHMDoubleReceiver
 from core.Camera import RSD435i
 
 def put_latest(mp_queue, data):
